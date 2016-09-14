@@ -1,0 +1,65 @@
+Get largest ID (to create a new one):
+select max(id) from pm_portfolios
+
+Add new portfolio:
+"insert into pm_portfolios (username,id,name,cash) values(?,?,?,0)
+
+Get balance in portfolio:
+select cash from pm_portfolios where id=?
+
+Get name of portfolio:
+select name from pm_portfolios where id=?
+
+Get information for history plot:
+select timestamp, close from (select * from cs339.StocksDaily union select * from pm_new_data) t where symbol=? and timestamp>=? and timestamp<=? order by timestamp
+
+Deposit/withdraw cash:
+update pm_portfolios set cash=? where id=?
+
+Get current # shares:
+select shares from pm_portfolio_contents where pid=? and symbol=?
+
+Change # shares:
+update pm_portfolio_contents set shares=? where pid=? and symbol=?
+
+Document new ownership of stock:
+insert into pm_portfolio_contents (pid,symbol,shares) values(?,?,?)
+
+Add new daily information:
+insert into pm_new_data (symbol,timestamp,open,low,high,close,volume) values(?,?,?,?,?,?,?)
+
+Get info for COV:
+select avg(close), stddev(close) from (select * from cs339.StocksDaily union select * from pm_new_data) t where symbol=? and timestamp>=? and timestamp<=?
+
+Get random symbol:
+select symbol from (select symbol from cs339.StocksSymbols order by dbms_random.value) where rownum=1
+
+Get means,vars for matching columns:
+select count(*),avg(l.close),stddev(l.close),avg(r.close),stddev(r.close) from (select * from cs339.StocksDaily union select * from pm_new_data) l join (select timestamp,sum(close) close from (select * from (select * from cs339.StocksDaily union select * from pm_new_data) where symbol in (?,?,?,?,?)) group by timestamp)  r on l.timestamp= r.timestamp where l.symbol='$s1'
+
+Get covariance
+select avg((l.close - $mean_f1)*(r.close - $mean_f2)) from (select * from cs339.StocksDaily union select * from pm_new_data) l join (select timestamp,sum(close) close from (select * from (select * from cs339.StocksDaily union select * from pm_new_data) where symbol in (?,?,?,?,?)) group by timestamp) r on  l.timestamp=r.timestamp where l.symbol='$s1'
+
+Remove ownership of stock
+delete from pm_portfolio_contents where pid=? and symbol=?
+
+Get all stocks in a portfolio:
+select symbol, shares from pm_portfolio_contents where pid=?
+
+Get most recent timestamp
+select max(timestamp) from (select * from cs339.StocksDaily union select * from pm_new_data) where symbol=?
+
+Get most recent close value
+select t.close from cs339.StocksDaily t inner join (select symbol, max(timestamp) as max_date from cs339.StocksDaily where symbol=? group by symbol) a on a.symbol = t.symbol and a.max_date = t.timestamp
+select t.close from pm_new_data t inner join (select symbol, max(timestamp) as max_date from pm_new_data where symbol=? group by symbol) a on a.symbol = t.symbol and a.max_date = t.timestamp
+
+Register
+insert into pm_users (name,password) values (?,?)
+
+Get a user's portfolios
+select id from pm_portfolios where username=?
+
+Check if user is valid
+select count(*) from pm_users where name=? and password=?
+
+
